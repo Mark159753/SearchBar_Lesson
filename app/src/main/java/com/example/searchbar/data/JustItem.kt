@@ -6,6 +6,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "just_item")
 data class JustItem (
     @PrimaryKey(autoGenerate = true)
-    var id:Int? = null,
+    var _id:Int? = null,
     val value:String
 )

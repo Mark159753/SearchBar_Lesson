@@ -2,14 +2,19 @@ package com.example.searchbar.activitys.main
 
 import android.app.SearchManager
 import android.content.Context
+import android.database.Cursor
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
+import android.widget.CursorAdapter
 import android.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.example.searchbar.R
+import com.example.searchbar.adapter.SearchCursorAdapter
 import com.example.searchbar.data.JustItem
 import com.example.searchbar.data.MyDataBase
 import com.example.searchbar.repository.Repository
@@ -20,6 +25,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: MainViewModel
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val cursor = MutableLiveData<Cursor>()
+    private var cursorAdapter:SearchCursorAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +43,11 @@ class MainActivity : AppCompatActivity() {
 
         val toolbar = findViewById<Toolbar>(R.id.actionBar)
         setSupportActionBar(toolbar)
+
+        cursor.observe(this, Observer {
+            if (it.count <= 0 || it == null) return@Observer
+            cursorAdapter?.swapCursor(it)
+        })
 
         insert_btn.setOnClickListener { insert() }
         search_btn.setOnClickListener { search(String.format("*%s*", "fuc")) }
@@ -60,8 +72,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun search(term:String) = scope.launch {
-        val res = viewModel.search(term)
-        Log.e("LIST", res.toString())
+        cursor.postValue(viewModel.search(String.format("*%s*", term)))
     }
 
 
@@ -72,6 +83,9 @@ class MainActivity : AppCompatActivity() {
         val searchView = searchItem?.actionView as androidx.appcompat.widget.SearchView
         searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
 
+        cursorAdapter = SearchCursorAdapter(this, null)
+        searchView.suggestionsAdapter = cursorAdapter
+
         searchView.setOnQueryTextListener(object :androidx.appcompat.widget.SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
@@ -79,6 +93,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 Log.e("TEXT", newText)
+                search(newText!!)
                 return false
             }
         })
