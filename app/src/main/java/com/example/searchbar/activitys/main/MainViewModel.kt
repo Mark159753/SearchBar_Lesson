@@ -1,4 +1,4 @@
-package com.example.searchbar
+package com.example.searchbar.activitys.main
 
 import androidx.lifecycle.ViewModel
 import com.example.searchbar.data.JustItem
